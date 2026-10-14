@@ -39,4 +39,14 @@ pub fn build(b: *std.Build) void {
     });
     const semantic_test_run = b.addRunArtifact(semantic_tests);
     test_step.dependOn(&semantic_test_run.step);
+
+    const trajectory_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/trajectory.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    const trajectory_test_run = b.addRunArtifact(trajectory_tests);
+    test_step.dependOn(&trajectory_test_run.step);
 }

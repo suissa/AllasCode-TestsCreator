@@ -31,6 +31,12 @@ zig build test
 zig build run
 ```
 
+## Trajectory coverage
+
+The structural path generator is in [src/trajectory.zig](src/trajectory.zig), with its skill contract in [skills/trajectory-coverage/SKILL.md](skills/trajectory-coverage/SKILL.md) and specification in [docs/TRAJECTORY-COVERAGE.md](docs/TRAJECTORY-COVERAGE.md).
+
+Given a directed graph with a declared start and explicit terminal states, it enumerates reachable terminal trajectories, bounds traversal, and reports transitions not represented in emitted paths. This is structural model-based path generation; guard satisfiability and runtime execution still require adapters.
+
 ## Canonical sources and skills
 
 - Semantic declaration: [src/declarations/purecore.pct](src/declarations/purecore.pct)

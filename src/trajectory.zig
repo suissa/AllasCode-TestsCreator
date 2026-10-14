@@ -88,7 +88,6 @@ const Context = struct {
             if (edge.from != current) continue;
             has_outgoing = true;
             if (self.options.stop_on_cycle and contains(nodes.items, edge.to)) {
-                self.edge_hits[edge_index] = true;
                 continue;
             }
             try edges.append(self.allocator, edge_index);
@@ -134,7 +133,8 @@ test "cycles are bounded and transitions are accounted for" {
     var plan = try generate(allocator, .{ .nodes = &nodes, .edges = &edges, .start = 0 }, .{});
     defer plan.deinit(allocator);
     try std.testing.expectEqual(@as(usize, 1), plan.trajectories.len);
-    try std.testing.expectEqual(@as(usize, 0), plan.uncovered_edges.len);
+    try std.testing.expectEqual(@as(usize, 1), plan.uncovered_edges.len);
+    try std.testing.expectEqual(@as(usize, 1), plan.uncovered_edges[0]);
 }
 test "reports unreachable transitions" {
     const allocator = std.testing.allocator;

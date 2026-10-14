@@ -92,7 +92,6 @@ const Context = struct {
             }
             try edges.append(self.allocator, edge_index);
             try nodes.append(self.allocator, edge.to);
-            self.edge_hits[edge_index] = true;
             try self.walk(edge.to, nodes, edges, depth + 1);
             _ = nodes.pop();
             _ = edges.pop();
@@ -105,6 +104,8 @@ const Context = struct {
         const edge_copy = try self.allocator.dupe(usize, edges.items);
         errdefer self.allocator.free(edge_copy);
         try self.paths.append(self.allocator, .{ .nodes = node_copy, .edges = edge_copy, .terminal = terminal });
+        // Coverage means an edge appears in an emitted trajectory, not merely that DFS visited it.
+        for (edges.items) |edge_index| self.edge_hits[edge_index] = true;
     }
 };
 fn contains(items: []const NodeId, target: NodeId) bool {
@@ -145,6 +146,17 @@ test "reports unreachable transitions" {
     try std.testing.expectEqual(@as(usize, 1), plan.uncovered_edges.len);
     try std.testing.expectEqual(@as(usize, 1), plan.uncovered_edges[0]);
 }
+test "does not count dead-end transitions without an emitted trajectory" {
+    const allocator = std.testing.allocator;
+    const nodes = [_]Node{ .{ .name = "START" }, .{ .name = "DONE", .terminal = true }, .{ .name = "DEAD_END" } };
+    const edges = [_]Edge{ .{ .from = 0, .to = 1, .label = "finish" }, .{ .from = 0, .to = 2, .label = "dead-end" } };
+    var plan = try generate(allocator, .{ .nodes = &nodes, .edges = &edges, .start = 0 }, .{});
+    defer plan.deinit(allocator);
+    try std.testing.expectEqual(@as(usize, 1), plan.trajectories.len);
+    try std.testing.expectEqual(@as(usize, 1), plan.uncovered_edges.len);
+    try std.testing.expectEqual(@as(usize, 1), plan.uncovered_edges[0]);
+}
+
 test "rejects invalid graph start and zero depth" {
     const allocator = std.testing.allocator;
     const nodes = [_]Node{.{ .name = "DONE", .terminal = true }};

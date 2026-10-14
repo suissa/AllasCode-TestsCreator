@@ -333,6 +333,10 @@ const sample_config =
     \security_denials: network,arbitrary_code,source_mutation,direct_terminal_event
 ;
 
+pub fn compileSample() Buffer {
+    return compile(sample_declaration, sample_config);
+}
+
 test "compiles all five canonical schemas deterministically" {
     const a = compile(sample_declaration, sample_config);
     const b = compile(sample_declaration, sample_config);

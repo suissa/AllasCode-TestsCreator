@@ -1,0 +1,11 @@
+# Canonical AllasCode semantic test DSL.
+# Every suite must declare each canonical kind exactly as a scenario.
+suite DynamicDataQuality
+agent ConfiguredDataAgent
+intent ConfiguredDynamicDataIntent
+
+unit Data.InspectValueShape subject=action input=records invariants=bounded-local-input,runtime-owned-terminal,idempotent
+load Data.InspectValueShape subject=action input=records invariants=bounded-local-input,idempotent,replay-stable
+stress Data.AggregateRecords subject=action input=records invariants=bounded-local-input,bounded-memory,fair-scheduling
+chaos Data.MaterializeProjection subject=action input=records invariants=restart-safe,resume-safe,replay-stable
+security Data.MaterializeProjection subject=action input=records invariants=no-network,no-arbitrary-code,no-source-mutation,no-direct-terminal

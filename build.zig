@@ -27,6 +27,15 @@ pub fn build(b: *std.Build) void {
         }),
     });
     const test_run = b.addRunArtifact(tests);
-    const test_step = b.step("test", "Run TestsCreator unit tests");
+    const trajectory_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/trajectory.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    const trajectory_test_run = b.addRunArtifact(trajectory_tests);
+    const test_step = b.step("test", "Run unit and trajectory coverage tests");
     test_step.dependOn(&test_run.step);
+    test_step.dependOn(&trajectory_test_run.step);
 }

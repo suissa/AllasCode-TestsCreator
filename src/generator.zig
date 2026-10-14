@@ -86,19 +86,32 @@ fn defaultValue(allocator: std.mem.Allocator, constraints: model.Constraints, se
             const min_len = c.min_len orelse 1;
             const max_len = c.max_len orelse @max(min_len, 8);
             if (min_len > max_len) return GenerationError.InvalidConstraintRange;
-            const span = max_len - min_len + 1;
-            const target = min_len + @as(usize, @intCast(seed % span));
+            const target = boundedUsize(min_len, max_len, seed);
             break :blk .{ .string = try repeatAscii(allocator, target, seed) };
         },
         .integer => |c| blk: {
             const min = c.min orelse 0;
             const max = c.max orelse @max(min, 100);
             if (min > max) return GenerationError.InvalidConstraintRange;
-            const value = if (min == max) min else min + @as(i64, @intCast(seed % @as(u64, @intCast(max - min + 1))));
-            break :blk .{ .integer = value };
+            break :blk .{ .integer = boundedInt(min, max, seed) };
         },
         .boolean => .{ .boolean = (seed & 1) == 0 },
     };
+}
+
+fn boundedUsize(min: usize, max: usize, seed: u64) usize {
+    if (min == max) return min;
+    const span = max - min;
+    if (span == std.math.maxInt(usize))
+        return if ((seed & 1) == 0) min else max;
+    return min + @as(usize, @intCast(seed % @as(u64, @intCast(span + 1))));
+}
+
+fn boundedInt(min: i64, max: i64, seed: u64) i64 {
+    if (min == max) return min;
+    const span: u128 = @as(u128, @intCast(@as(i128, max) - @as(i128, min) + 1));
+    const offset: i128 = @intCast(@as(u128, seed) % span);
+    return @intCast(@as(i128, min) + offset);
 }
 
 fn appendStringCase(allocator: std.mem.Allocator, cases: *std.ArrayList(model.TestCase), spec: model.FunctionSpec, seed: u64, index: usize, param_name: []const u8, prefix: []const u8, suffix: []const u8, len: usize, kind: model.CaseKind, invalid_parameter: ?[]const u8) !void {
@@ -112,7 +125,7 @@ fn appendStringCase(allocator: std.mem.Allocator, cases: *std.ArrayList(model.Te
 }
 
 fn appendIntCase(allocator: std.mem.Allocator, cases: *std.ArrayList(model.TestCase), spec: model.FunctionSpec, seed: u64, index: usize, param_name: []const u8, prefix: []const u8, suffix: []const u8, value: i64, kind: model.CaseKind, invalid_parameter: ?[]const u8) !void {
-    const args = try defaultArguments(allocator, spec, seed);
+    var args = try defaultArguments(allocator, spec, seed);
     errdefer freeArguments(allocator, args);
     args[index].value = .{ .integer = value };
     const name = try std.fmt.allocPrint(allocator, "{s}.{s}.{s}", .{prefix, param_name, suffix});
@@ -167,4 +180,52 @@ test "same seed is reproducible" {
     var b = try generate(allocator, .{ .name = "F", .parameters = &params }, 7);
     defer b.deinit(allocator);
     try std.testing.expectEqual(a.cases[0].arguments[0].value.integer, b.cases[0].arguments[0].value.integer);
+}
+
+test "invalid constraint ranges are rejected" {
+    const allocator = std.testing.allocator;
+    const params = [_]model.ParameterSpec{
+        .{ .name = "name", .constraints = .{ .string = .{ .min_len = 8, .max_len = 2 } } },
+    };
+    try std.testing.expectError(
+        GenerationError.InvalidConstraintRange,
+        generate(allocator, .{ .name = "Invalid", .parameters = &params }, 1),
+    );
+}
+
+test "negative cases mutate only their target parameter" {
+    const allocator = std.testing.allocator;
+    const params = [_]model.ParameterSpec{
+        .{ .name = "name", .constraints = .{ .string = .{ .min_len = 2, .max_len = 4 } } },
+        .{ .name = "age", .constraints = .{ .integer = .{ .min = 18, .max = 120 } } },
+    };
+    var plan = try generate(allocator, .{ .name = "CreateUser", .parameters = &params }, 11);
+    defer plan.deinit(allocator);
+
+    for (plan.cases) |case| {
+        if (case.kind != .invalid) continue;
+        const target = case.invalid_parameter.?;
+        for (case.arguments) |arg| {
+            if (std.mem.eql(u8, arg.name, target)) continue;
+            const baseline = plan.cases[0].arguments;
+            for (baseline) |base_arg| {
+                if (!std.mem.eql(u8, base_arg.name, arg.name)) continue;
+                switch (base_arg.value) {
+                    .string => |s| try std.testing.expectEqualStrings(s, arg.value.string),
+                    .integer => |v| try std.testing.expectEqual(v, arg.value.integer),
+                    .boolean => |v| try std.testing.expectEqual(v, arg.value.boolean),
+                }
+            }
+        }
+    }
+}
+
+test "full integer range does not overflow" {
+    const allocator = std.testing.allocator;
+    const params = [_]model.ParameterSpec{
+        .{ .name = "value", .constraints = .{ .integer = .{ .min = std.math.minInt(i64), .max = std.math.maxInt(i64) } } },
+    };
+    var plan = try generate(allocator, .{ .name = "F", .parameters = &params }, 99);
+    defer plan.deinit(allocator);
+    try std.testing.expectEqual(@as(usize, 3), plan.cases.len);
 }

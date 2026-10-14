@@ -12,7 +12,7 @@ Trajectory coverage tests every reachable branch of a behavior/workflow graph th
 ## Contract
 A graph contains named nodes, labeled directed edges, a start node, and explicit terminal nodes. Generation validates all edge endpoints, enumerates terminal trajectories deterministically, and reports edge coverage separately from the paths.
 
-Default cycle behavior stops revisiting a node within a path. Cyclic edges are marked encountered to avoid silently omitting the fact that the model contains that transition; the report does not claim that every cycle iteration has been tested. `max_depth` provides an additional hard bound.
+Default cycle behavior stops revisiting a node within a path. A cycle-closing edge skipped by the default simple-path policy remains uncovered and is reported explicitly; it is not falsely counted as executed. Dedicated bounded-loop test generation can cover it in a later iteration. `max_depth` provides an additional hard bound.
 
 ## Example
 ```text

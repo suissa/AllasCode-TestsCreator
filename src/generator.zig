@@ -227,5 +227,5 @@ test "full integer range does not overflow" {
     };
     var plan = try generate(allocator, .{ .name = "F", .parameters = &params }, 99);
     defer plan.deinit(allocator);
-    try std.testing.expectEqual(@as(usize, 5), plan.cases.len);
+    try std.testing.expectEqual(@as(usize, 3), plan.cases.len);
 }

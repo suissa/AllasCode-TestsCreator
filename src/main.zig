@@ -21,7 +21,7 @@ pub fn main() !void {
     try out.interface.print("function={s} seed={d} cases={d} ephemeral={} persist_payload={} persist_events={}\n", .{
         plan.function_name, plan.seed, plan.cases.len, plan.policy.ephemeral, plan.policy.persist_payload, plan.policy.persist_events,
     });
-    for (plan.cases) |case| try out.interface.print("{s} [{s}]\n", .{case.name, @tagName(case.kind)});
+    for (plan.cases) |case| try out.interface.print("{s} [{s}]\n", .{ case.name, @tagName(case.kind) });
     try out.interface.print("\ncanonical_bundle=", .{});
     const bundle = semantic_compiler.compileSample();
     try out.interface.print("{s}\n", .{bundle.slice()});

@@ -26,7 +26,9 @@ pub const Plan = struct {
     pub fn edgeCoverage(self: Plan) f64 {
         if (self.covered_edges.len == 0) return 1.0;
         var covered: usize = 0;
-        for (self.covered_edges) |hit| if (hit) { covered += 1; };
+        for (self.covered_edges) |hit| if (hit) {
+            covered += 1;
+        };
         return @as(f64, @floatFromInt(covered)) / @as(f64, @floatFromInt(self.covered_edges.len));
     }
 };
@@ -39,7 +41,9 @@ pub fn generate(allocator: std.mem.Allocator, graph: Graph, options: Options) !P
         if (edge.from >= graph.nodes.len or edge.to >= graph.nodes.len) return Error.InvalidEdge;
     }
     var context = Context{
-        .allocator = allocator, .graph = graph, .options = options,
+        .allocator = allocator,
+        .graph = graph,
+        .options = options,
         .paths = std.ArrayList(Trajectory).empty,
         .edge_hits = try allocator.alloc(bool, graph.edges.len),
     };
@@ -72,8 +76,11 @@ pub fn generate(allocator: std.mem.Allocator, graph: Graph, options: Options) !P
 }
 
 const Context = struct {
-    allocator: std.mem.Allocator, graph: Graph, options: Options,
-    paths: std.ArrayList(Trajectory), edge_hits: []bool,
+    allocator: std.mem.Allocator,
+    graph: Graph,
+    options: Options,
+    paths: std.ArrayList(Trajectory),
+    edge_hits: []bool,
     fn walk(self: *Context, current: NodeId, nodes: *std.ArrayList(NodeId), edges: *std.ArrayList(usize), depth: usize) anyerror!void {
         if (self.graph.nodes[current].terminal) {
             try self.emit(nodes, edges, true);
@@ -117,7 +124,7 @@ test "enumerates each terminal branch to its endpoint" {
     const allocator = std.testing.allocator;
     const nodes = [_]Node{ .{ .name = "START" }, .{ .name = "A" }, .{ .name = "SUCCESS", .terminal = true }, .{ .name = "RECOVER" }, .{ .name = "ABORT", .terminal = true } };
     const edges = [_]Edge{
-        .{ .from = 0, .to = 1, .label = "begin" }, .{ .from = 1, .to = 2, .label = "success" },
+        .{ .from = 0, .to = 1, .label = "begin" },   .{ .from = 1, .to = 2, .label = "success" },
         .{ .from = 1, .to = 3, .label = "failure" }, .{ .from = 3, .to = 2, .label = "retry" },
         .{ .from = 3, .to = 4, .label = "abort" },
     };

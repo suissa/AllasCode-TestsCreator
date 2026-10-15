@@ -13,11 +13,22 @@ pub fn generate(allocator: std.mem.Allocator, spec: model.FunctionSpec, seed: u6
         cases.deinit(allocator);
     }
 
-    try cases.append(allocator, .{
-        .name = try allocator.dupe(u8, "valid.default"),
+    // Build the initial case before transferring ownership to the cases list.
+    // If defaultArguments or append fails, release every allocation made here.
+    const valid_name = try allocator.dupe(u8, "valid.default");
+    const valid_arguments = defaultArguments(allocator, spec, seed) catch |err| {
+        allocator.free(valid_name);
+        return err;
+    };
+    cases.append(allocator, .{
+        .name = valid_name,
         .kind = .valid,
-        .arguments = try defaultArguments(allocator, spec, seed),
-    });
+        .arguments = valid_arguments,
+    }) catch |err| {
+        allocator.free(valid_name);
+        freeArguments(allocator, valid_arguments);
+        return err;
+    };
 
     for (spec.parameters, 0..) |param, index| {
         switch (param.constraints) {
@@ -117,9 +128,12 @@ fn boundedInt(min: i64, max: i64, seed: u64) i64 {
 fn appendStringCase(allocator: std.mem.Allocator, cases: *std.ArrayList(model.TestCase), spec: model.FunctionSpec, seed: u64, index: usize, param_name: []const u8, prefix: []const u8, suffix: []const u8, len: usize, kind: model.CaseKind, invalid_parameter: ?[]const u8) !void {
     var args = try defaultArguments(allocator, spec, seed);
     errdefer freeArguments(allocator, args);
-    switch (args[index].value) { .string => |old| allocator.free(old), else => {} }
+    switch (args[index].value) {
+        .string => |old| allocator.free(old),
+        else => {},
+    }
     args[index].value = .{ .string = try repeatAscii(allocator, len, seed +% index) };
-    const name = try std.fmt.allocPrint(allocator, "{s}.{s}.{s}", .{prefix, param_name, suffix});
+    const name = try std.fmt.allocPrint(allocator, "{s}.{s}.{s}", .{ prefix, param_name, suffix });
     errdefer allocator.free(name);
     try cases.append(allocator, .{ .name = name, .kind = kind, .invalid_parameter = invalid_parameter, .arguments = args });
 }
@@ -128,7 +142,7 @@ fn appendIntCase(allocator: std.mem.Allocator, cases: *std.ArrayList(model.TestC
     var args = try defaultArguments(allocator, spec, seed);
     errdefer freeArguments(allocator, args);
     args[index].value = .{ .integer = value };
-    const name = try std.fmt.allocPrint(allocator, "{s}.{s}.{s}", .{prefix, param_name, suffix});
+    const name = try std.fmt.allocPrint(allocator, "{s}.{s}.{s}", .{ prefix, param_name, suffix });
     errdefer allocator.free(name);
     try cases.append(allocator, .{ .name = name, .kind = kind, .invalid_parameter = invalid_parameter, .arguments = args });
 }

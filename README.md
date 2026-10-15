@@ -1,6 +1,6 @@
 # AllasCode TestsCreator
 
-Deterministic, runner-neutral test generation and canonical semantic test compilation for AllasCode Actions and AtomicBehaviors.
+Deterministic, runner-neutral test generation, canonical semantic compilation, trajectory coverage, and Zig-native contract-aware fuzzing for AllasCode Actions and AtomicBehaviors.
 
 ## Canonical pipeline
 

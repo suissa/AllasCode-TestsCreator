@@ -13,11 +13,22 @@ pub fn generate(allocator: std.mem.Allocator, spec: model.FunctionSpec, seed: u6
         cases.deinit(allocator);
     }
 
-    try cases.append(allocator, .{
-        .name = try allocator.dupe(u8, "valid.default"),
+    // Build the initial case before transferring ownership to the cases list.
+    // If defaultArguments or append fails, release every allocation made here.
+    const valid_name = try allocator.dupe(u8, "valid.default");
+    const valid_arguments = defaultArguments(allocator, spec, seed) catch |err| {
+        allocator.free(valid_name);
+        return err;
+    };
+    cases.append(allocator, .{
+        .name = valid_name,
         .kind = .valid,
-        .arguments = try defaultArguments(allocator, spec, seed),
-    });
+        .arguments = valid_arguments,
+    }) catch |err| {
+        allocator.free(valid_name);
+        freeArguments(allocator, valid_arguments);
+        return err;
+    };
 
     for (spec.parameters, 0..) |param, index| {
         switch (param.constraints) {

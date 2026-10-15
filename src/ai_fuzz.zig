@@ -21,14 +21,16 @@ pub fn generate(allocator: std.mem.Allocator, spec: model.FunctionSpec, seed: u6
         const elite = @max(@as(usize, 1), population.items.len / 3);
         var next = std.ArrayList(Candidate).empty; errdefer deinitPopulation(allocator, &next);
         for (population.items[0..elite]) |parent| try next.append(allocator, .{ .arguments = try cloneArguments(allocator, parent.arguments), .score = parent.score });
-        for (population.items[0..elite]) |parent| for (0..options.mutations_per_candidate) |mutation_index| {
+        for (population.items[0..elite]) |parent| {
+            for (0..options.mutations_per_candidate) |mutation_index| {
             var child = try cloneArguments(allocator, parent.arguments);
             mutateArguments(allocator, spec, child, rng.random(), generation + mutation_index);
             const score = frontierScore(spec, child); evaluated += 1;
             const key = try fingerprint(allocator, child); defer allocator.free(key);
             if (!seen.contains(key)) { try seen.put(key, {}); const name = try std.fmt.allocPrint(allocator, "fuzz.g{d}.m{d}.score{d}", .{ generation, mutation_index, score }); try cases.append(allocator, .{ .name = name, .kind = .valid, .arguments = try cloneArguments(allocator, child) }); }
             try next.append(allocator, .{ .arguments = child, .score = score });
-        };
+            }
+        }
         deinitPopulation(allocator, &population); population = next;
     }
     return .{ .cases = try cases.toOwnedSlice(allocator), .generations = options.generations, .evaluated = evaluated, .unique_inputs = seen.count() };

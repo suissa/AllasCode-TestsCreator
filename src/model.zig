@@ -49,7 +49,7 @@ pub const TestCase = struct {
 };
 
 pub const ExecutionPolicy = struct {
-    test: bool = true,
+    enabled: bool = true,
     ephemeral: bool = true,
     persist_payload: bool = false,
     persist_events: bool = false,

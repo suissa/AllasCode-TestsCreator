@@ -307,30 +307,30 @@ pub fn compile(comptime declaration_source: []const u8, comptime yaml_source: []
 }
 
 const sample_declaration =
-    \suite DynamicDataQuality
-    \agent ConfiguredDataAgent
-    \intent ConfiguredDynamicDataIntent
-    \unit Data.InspectValueShape subject=action input=records invariants=bounded-local-input,runtime-owned-terminal,idempotent
-    \load Data.InspectValueShape subject=action input=records invariants=bounded-local-input,idempotent,replay-stable
-    \stress Data.AggregateRecords subject=action input=records invariants=bounded-local-input,bounded-memory,fair-scheduling
-    \chaos Data.MaterializeProjection subject=action input=records invariants=restart-safe,resume-safe,replay-stable
-    \security Data.MaterializeProjection subject=action input=records invariants=no-network,no-arbitrary-code,no-source-mutation,no-direct-terminal
+    \\suite DynamicDataQuality
+    \\agent ConfiguredDataAgent
+    \\intent ConfiguredDynamicDataIntent
+    \\unit Data.InspectValueShape subject=action input=records invariants=bounded-local-input,runtime-owned-terminal,idempotent
+    \\load Data.InspectValueShape subject=action input=records invariants=bounded-local-input,idempotent,replay-stable
+    \\stress Data.AggregateRecords subject=action input=records invariants=bounded-local-input,bounded-memory,fair-scheduling
+    \\chaos Data.MaterializeProjection subject=action input=records invariants=restart-safe,resume-safe,replay-stable
+    \\security Data.MaterializeProjection subject=action input=records invariants=no-network,no-arbitrary-code,no-source-mutation,no-direct-terminal
 ;
 
 const sample_config =
-    \suite: DynamicDataQuality
-    \agent: ConfiguredDataAgent
-    \intent: ConfiguredDynamicDataIntent
-    \unit_max_events: 64
-    \load_repetitions: 8
-    \load_max_events: 256
-    \stress_workers: 4
-    \stress_duration_ms: 1000
-    \stress_max_failures: 0
-    \chaos_faults: interrupt,restart,resume,replay
-    \chaos_recovery: resume_then_replay
-    \security_capabilities: local_ram,local_disk,event_store
-    \security_denials: network,arbitrary_code,source_mutation,direct_terminal_event
+    \\suite: DynamicDataQuality
+    \\agent: ConfiguredDataAgent
+    \\intent: ConfiguredDynamicDataIntent
+    \\unit_max_events: 64
+    \\load_repetitions: 8
+    \\load_max_events: 256
+    \\stress_workers: 4
+    \\stress_duration_ms: 1000
+    \\stress_max_failures: 0
+    \\chaos_faults: interrupt,restart,resume,replay
+    \\chaos_recovery: resume_then_replay
+    \\security_capabilities: local_ram,local_disk,event_store
+    \\security_denials: network,arbitrary_code,source_mutation,direct_terminal_event
 ;
 
 pub fn compileSample() Buffer {

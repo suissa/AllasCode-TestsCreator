@@ -11,14 +11,12 @@ TestsCreator generates:
 - edge-coverage reports that identify transitions not exercised from the declared start;
 - ephemeral test execution metadata so payloads and business events are never persisted.
 
-The canonical implementation targets Zig 0.16 and is designed to consume AllasCode Semantic AtomicBehavior Type constraints.
+1. **Contract-case generation** — one valid synthetic case, boundary cases, and isolated invalid cases derived from declared constraints, using a reproducible seed.
+2. **Semantic suite compilation** — the PureCore DSL and scenario config compile into deterministic canonical JSON for five distinct test types: unit, load, stress, chaos, and security.
 
-## Run
+The semantic compiler validates matching suite/agent/intent identities, required test kinds, recognized configuration keys, and bounded non-zero load/stress settings. DSL/config are data, never executable assertions. The runtime executor remains the authority for observed pass/fail outcomes.
 
-```bash
-zig build test
-zig build run
-```
+## Canonical test types
 
 ## Unit/contract tests
 

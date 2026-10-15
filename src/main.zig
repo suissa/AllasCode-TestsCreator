@@ -1,6 +1,7 @@
 const std = @import("std");
 const model = @import("model.zig");
 const generator = @import("generator.zig");
+const semantic_compiler = @import("semantic_compiler.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -21,5 +22,8 @@ pub fn main() !void {
         plan.function_name, plan.seed, plan.cases.len, plan.policy.ephemeral, plan.policy.persist_payload, plan.policy.persist_events,
     });
     for (plan.cases) |case| try out.interface.print("{s} [{s}]\n", .{case.name, @tagName(case.kind)});
+    try out.interface.print("\ncanonical_bundle=", .{});
+    const bundle = semantic_compiler.compileSample();
+    try out.interface.print("{s}\n", .{bundle.slice()});
     try out.interface.flush();
 }

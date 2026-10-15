@@ -1,0 +1,14 @@
+# Scenario parameters only. This file cannot define executable assertions.
+suite: DynamicDataQuality
+agent: ConfiguredDataAgent
+intent: ConfiguredDynamicDataIntent
+unit_max_events: 64
+load_repetitions: 8
+load_max_events: 256
+stress_workers: 4
+stress_duration_ms: 1000
+stress_max_failures: 0
+chaos_faults: interrupt,restart,resume,replay
+chaos_recovery: resume_then_replay
+security_capabilities: local_ram,local_disk,event_store
+security_denials: network,arbitrary_code,source_mutation,direct_terminal_event

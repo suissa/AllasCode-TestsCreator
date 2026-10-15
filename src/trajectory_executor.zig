@@ -57,13 +57,18 @@ pub fn execute(
     action_runner: ActionRunner,
     invariant_oracle: InvariantOracle,
 ) !Report {
+    const attempted_edges = try allocator.alloc(bool, graph.edges.len);
+    errdefer allocator.free(attempted_edges);
+    const passed_edges = try allocator.alloc(bool, graph.edges.len);
+    errdefer allocator.free(passed_edges);
+    const failed_edges = try allocator.alloc(bool, graph.edges.len);
+    errdefer allocator.free(failed_edges);
     var report = Report{
-        .attempted_edges = try allocator.alloc(bool, graph.edges.len),
-        .passed_edges = try allocator.alloc(bool, graph.edges.len),
-        .failed_edges = try allocator.alloc(bool, graph.edges.len),
+        .attempted_edges = attempted_edges,
+        .passed_edges = passed_edges,
+        .failed_edges = failed_edges,
         .invariant_failures = &.{},
     };
-    errdefer report.deinit(allocator);
     @memset(report.attempted_edges, false);
     @memset(report.passed_edges, false);
     @memset(report.failed_edges, false);

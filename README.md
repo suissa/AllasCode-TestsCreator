@@ -24,8 +24,19 @@ For a function such as `CreateUser(name: String(min=1,max=80), age: Int(min=18,m
 
 ## Trajectory coverage
 
-The new structural path generator is in [src/trajectory.zig](src/trajectory.zig), with the skill contract in [skills/trajectory-coverage/SKILL.md](skills/trajectory-coverage/SKILL.md) and details in [docs/TRAJECTORY-COVERAGE.md](docs/TRAJECTORY-COVERAGE.md).
+The structural path generator is in [src/trajectory.zig](src/trajectory.zig), with its skill contract in [skills/trajectory-coverage/SKILL.md](skills/trajectory-coverage/SKILL.md) and details in [docs/TRAJECTORY-COVERAGE.md](docs/TRAJECTORY-COVERAGE.md).
 
 Given a directed graph with a declared start and explicit terminal states, it enumerates reachable terminal trajectories, handles cycles with a bounded policy, and reports uncovered edges. This is structural model-based path generation; guard satisfiability and runtime execution still require adapters.
+
+## Native Smith semantic fuzzing
+
+The contract-aware adapter in [src/smith_fuzz.zig](src/smith_fuzz.zig) uses Zig 0.16 `std.testing.Smith` rather than a parallel evolutionary engine. It biases typed values toward declared boundaries, bounds string allocation, validates generated inputs, and fuzzes the canonical case generator.
+
+```sh
+zig build test
+zig build test-fuzz
+```
+
+Specification: [docs/NATIVE-SMITH-SEMANTIC-FUZZING.md](docs/NATIVE-SMITH-SEMANTIC-FUZZING.md). Skill: [skills/native-smith-semantic-fuzzing/SKILL.md](skills/native-smith-semantic-fuzzing/SKILL.md). Runtime Action execution and trajectory/invariant feedback remain future adapter work.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the existing generator pipeline.

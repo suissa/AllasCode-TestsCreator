@@ -1,21 +1,9 @@
-# AI-Guided Fuzzing
+# AI-Guided Fuzzing: Implementation Status
 
-TestsCreator uses a deterministic adaptive evolutionary fuzzing primitive. It is provider-free: candidates are selected by a fitness function and mutated around the highest-value frontier rather than sampled uniformly.
+The original proposal used a standalone evolutionary engine. That implementation has been superseded by Zig 0.16's native `std.testing.Smith` integration in [NATIVE-SMITH-SEMANTIC-FUZZING.md](NATIVE-SMITH-SEMANTIC-FUZZING.md).
 
-The population is scored by proximity to declared minimum/maximum constraints and evolved across bounded generations. Novel fingerprints are retained as generated test cases.
+The canonical implementation is now `src/smith_fuzz.zig`. It uses typed Smith values, emphasizes declared constraint boundaries, and relies on Zig's own fuzzing engine for mutation, corpus handling, and coverage feedback. Do not add a second genetic algorithm alongside Smith.
 
-This is the first intelligent-search layer, not a claim of semantic AI. It currently has no execution oracle, branch-coverage feedback, crash classifier, or learned policy.
+AI-guided planning and runtime behavior feedback are future extensions: an isolated execution adapter may prioritize trajectories, branches, invariants, and crash novelty. No AI provider is required for the native fuzzer.
 
-## Evolution loop
-
-Seed → population → score → elite selection → mutation → score → novelty filter → next generation.
-
-The fitness function is the extension point. A future execution adapter can reward new trajectory/state coverage, distance to an uncovered branch, invariant violations, crash/error novelty, latency/resource anomalies, or an AI judge's semantic feedback.
-
-## Combination with trajectory coverage
-
-Trajectory Coverage identifies reachable terminal paths. Adaptive fuzzing can then use execution feedback to prioritize inputs that reach trajectories or transitions that remain uncovered. This turns the pipeline into targeted exploration rather than blind Cartesian-product enumeration.
-
-## Reproducibility and isolation
-
-Runs have explicit seeds and bounded population/generation/mutation parameters. Generated payloads remain ephemeral under the existing execution policy; production side effects must be isolated by the execution adapter.
+Run `zig build test` for ordinary tests and `zig build test-fuzz` for a bounded native fuzz pass. CI validates the project with Zig 0.16.0 before merge.

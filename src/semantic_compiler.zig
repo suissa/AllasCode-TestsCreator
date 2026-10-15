@@ -42,7 +42,7 @@ pub const Buffer = struct {
     len: usize = 0,
 
     fn raw(self: *Buffer, value: []const u8) void {
-        if (self.len + value.len > max_output) @compileError("generated JSON exceeds compiler buffer");
+        std.debug.assert(self.len + value.len <= max_output);
         @memcpy(self.bytes[self.len .. self.len + value.len], value);
         self.len += value.len;
     }
@@ -307,9 +307,9 @@ fn appendTest(output: *Buffer, test_case: Case, config: YamlConfig) void {
 
 pub fn compile(comptime declaration_source: []const u8, comptime yaml_source: []const u8) Buffer {
     @setEvalBranchQuota(100_000);
-    const declaration = parseDeclaration(declaration_source);
-    const config = parseYaml(yaml_source);
-    validate(declaration, config);
+    const declaration = comptime parseDeclaration(declaration_source);
+    const config = comptime parseYaml(yaml_source);
+    comptime validate(declaration, config);
     var output = Buffer{};
     output.raw("{");
     output.key("schema", "pcore.test.bundle.v1");

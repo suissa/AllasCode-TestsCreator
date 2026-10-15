@@ -2,9 +2,14 @@
 
 Deterministic, runner-neutral test generation, canonical semantic compilation, trajectory coverage, and Zig-native contract-aware fuzzing for AllasCode Actions and AtomicBehaviors.
 
-## Canonical pipeline
-
-TestsCreator unifies two layers:
+TestsCreator generates:
+- one fully valid synthetic case;
+- boundary cases from declared constraints;
+- isolated invalid cases, changing exactly one parameter/property at a time;
+- reproducible values from a seed;
+- trajectory tests that traverse modeled workflow branches to terminal outcomes;
+- edge-coverage reports that identify transitions not exercised from the declared start;
+- ephemeral test execution metadata so payloads and business events are never persisted.
 
 1. **Contract-case generation** — one valid synthetic case, boundary cases, and isolated invalid cases derived from declared constraints, using a reproducible seed.
 2. **Semantic suite compilation** — the PureCore DSL and scenario config compile into deterministic canonical JSON for five distinct test types: unit, load, stress, chaos, and security.
@@ -13,23 +18,9 @@ The semantic compiler validates matching suite/agent/intent identities, required
 
 ## Canonical test types
 
-| Kind | Purpose | Schema |
-| --- | --- | --- |
-| Unit | Valid, boundary, isolated-invalid contract behavior | `pcore.test.unit.v1` |
-| Load | Bounded repetitions, idempotent settlement, replay stability | `pcore.test.load.v1` |
-| Stress | Concurrent workers, duration, failure budget, fair scheduling | `pcore.test.stress.v1` |
-| Chaos | Controlled faults, recovery, resume and replay | `pcore.test.chaos.v1` |
-| Security | Capability allowlist, denials, secret handling, terminal authority | `pcore.test.security.v1` |
+## Unit/contract tests
 
-## Run
-
-Requires Zig 0.16.
-
-```sh
-zig fmt --check build.zig src
-zig build test
-zig build run
-```
+For a function such as `CreateUser(name: String(min=1,max=80), age: Int(min=18,max=120))`, the generator creates valid, boundary, and isolated invalid cases. Every negative case keeps all other arguments valid.
 
 ## Trajectory coverage
 
@@ -50,11 +41,6 @@ Specification: [docs/NATIVE-SMITH-SEMANTIC-FUZZING.md](docs/NATIVE-SMITH-SEMANTI
 
 ## Canonical sources and skills
 
-- Semantic declaration: [src/declarations/purecore.pct](src/declarations/purecore.pct)
-- Scenario configuration: [src/config/purecore.yaml](src/config/purecore.yaml)
-- Compile-time compiler: [src/semantic_compiler.zig](src/semantic_compiler.zig)
-- Pipeline specification: [docs/CANONICAL_TEST_PIPELINE.md](docs/CANONICAL_TEST_PIPELINE.md)
-- Pipeline skill: [skills/canonical-test-pipeline/SKILL.md](skills/canonical-test-pipeline/SKILL.md)
-- Skills for [unit](skills/canonical-test-pipeline/unit/SKILL.md), [load](skills/canonical-test-pipeline/load/SKILL.md), [stress](skills/canonical-test-pipeline/stress/SKILL.md), [chaos](skills/canonical-test-pipeline/chaos/SKILL.md), and [security](skills/canonical-test-pipeline/security/SKILL.md).
+Given a directed graph with a declared start and explicit terminal states, it enumerates reachable terminal trajectories, handles cycles with a bounded policy, and reports uncovered edges. This is structural model-based path generation; guard satisfiability and runtime execution still require adapters.
 
-The generator's ephemeral policy remains mandatory: `test=true`, `ephemeral=true`, `persist_payload=false`, `persist_events=false`. Never persist generated payloads or synthetic business events. Fault injection must be isolated and bounded.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the existing generator pipeline.

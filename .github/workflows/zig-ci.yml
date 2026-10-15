@@ -1,0 +1,45 @@
+name: Zig CI
+
+on:
+  push:
+    branches: ["main", "fix/**"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: write
+
+jobs:
+  zig:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Zig 0.16.0
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+
+      - name: Format Zig sources
+        run: zig fmt build.zig src
+
+      - name: Verify formatting
+        run: zig fmt --check build.zig src
+
+      - name: Run tests
+        run: zig build test
+
+      - name: Commit formatting fixes when needed
+        if: github.event_name == 'pull_request' || github.ref_name != 'main'
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add build.zig src
+            git commit -m "style: format Zig sources [skip ci]"
+            git push
+          fi

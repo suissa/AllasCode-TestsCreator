@@ -28,6 +28,8 @@ The structural path generator is in [src/trajectory.zig](src/trajectory.zig), wi
 
 Given a directed graph with a declared start and explicit terminal states, it enumerates reachable terminal trajectories, handles cycles with a bounded policy, and reports uncovered edges. This is structural model-based path generation; guard satisfiability and runtime execution still require adapters.
 
+The runtime-neutral feedback adapter in [src/trajectory_executor.zig](src/trajectory_executor.zig) runs generated paths through test-only Action callbacks, records attempted/passed/failed edge coverage, and evaluates terminal invariants after successful paths. See [docs/TRAJECTORY-EXECUTION-ADAPTER.md](docs/TRAJECTORY-EXECUTION-ADAPTER.md). This is an adapter contract, not an OS sandbox; callbacks must use isolated test fixtures and avoid production side effects.
+
 ## Native Smith semantic fuzzing
 
 The contract-aware adapter in [src/smith_fuzz.zig](src/smith_fuzz.zig) uses Zig 0.16 `std.testing.Smith` rather than a parallel evolutionary engine. It biases typed values toward declared boundaries, bounds string allocation, validates generated inputs, and fuzzes the canonical case generator.

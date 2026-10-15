@@ -13,7 +13,7 @@ pub fn build(b: *std.Build) void {
 
     const tests = b.addTest(.{ .root_module = b.createModule(.{ .root_source_file = b.path("src/generator.zig"), .target = target, .optimize = optimize }) });
     const test_run = b.addRunArtifact(tests);
-    const test_step = b.step("test", "Run generator, semantic, trajectory and adaptive fuzzing tests");
+    const test_step = b.step("test", "Run generator, semantic, trajectory and native Smith fuzzing tests");
     test_step.dependOn(&test_run.step);
 
     const semantic_tests = b.addTest(.{ .root_module = b.createModule(.{ .root_source_file = b.path("src/semantic_compiler.zig"), .target = target, .optimize = optimize }) });

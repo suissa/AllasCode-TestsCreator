@@ -174,20 +174,7 @@ fn parseYaml(comptime source: []const u8) YamlConfig {
         const separator = std.mem.indexOfScalar(u8, line, ':') orelse @compileError("YAML line must contain ':'");
         const key_name = std.mem.trim(u8, line[0..separator], " \t");
         const value = std.mem.trim(u8, line[separator + 1 ..], " \t\"");
-        if (std.mem.eql(u8, key_name, "suite")) result.suite = value
-        else if (std.mem.eql(u8, key_name, "agent")) result.agent = value
-        else if (std.mem.eql(u8, key_name, "intent")) result.intent = value
-        else if (std.mem.eql(u8, key_name, "unit_max_events")) result.unit_max_events = parseNumber(value, key_name)
-        else if (std.mem.eql(u8, key_name, "load_repetitions")) result.load_repetitions = parseNumber(value, key_name)
-        else if (std.mem.eql(u8, key_name, "load_max_events")) result.load_max_events = parseNumber(value, key_name)
-        else if (std.mem.eql(u8, key_name, "stress_workers")) result.stress_workers = parseNumber(value, key_name)
-        else if (std.mem.eql(u8, key_name, "stress_duration_ms")) result.stress_duration_ms = parseNumber(value, key_name)
-        else if (std.mem.eql(u8, key_name, "stress_max_failures")) result.stress_max_failures = parseNumber(value, key_name)
-        else if (std.mem.eql(u8, key_name, "chaos_faults")) result.chaos_faults = value
-        else if (std.mem.eql(u8, key_name, "chaos_recovery")) result.chaos_recovery = value
-        else if (std.mem.eql(u8, key_name, "security_capabilities")) result.security_capabilities = value
-        else if (std.mem.eql(u8, key_name, "security_denials")) result.security_denials = value
-        else @compileError("unknown YAML configuration key");
+        if (std.mem.eql(u8, key_name, "suite")) result.suite = value else if (std.mem.eql(u8, key_name, "agent")) result.agent = value else if (std.mem.eql(u8, key_name, "intent")) result.intent = value else if (std.mem.eql(u8, key_name, "unit_max_events")) result.unit_max_events = parseNumber(value, key_name) else if (std.mem.eql(u8, key_name, "load_repetitions")) result.load_repetitions = parseNumber(value, key_name) else if (std.mem.eql(u8, key_name, "load_max_events")) result.load_max_events = parseNumber(value, key_name) else if (std.mem.eql(u8, key_name, "stress_workers")) result.stress_workers = parseNumber(value, key_name) else if (std.mem.eql(u8, key_name, "stress_duration_ms")) result.stress_duration_ms = parseNumber(value, key_name) else if (std.mem.eql(u8, key_name, "stress_max_failures")) result.stress_max_failures = parseNumber(value, key_name) else if (std.mem.eql(u8, key_name, "chaos_faults")) result.chaos_faults = value else if (std.mem.eql(u8, key_name, "chaos_recovery")) result.chaos_recovery = value else if (std.mem.eql(u8, key_name, "security_capabilities")) result.security_capabilities = value else if (std.mem.eql(u8, key_name, "security_denials")) result.security_denials = value else @compileError("unknown YAML configuration key");
     }
     return result;
 }
@@ -241,8 +228,10 @@ fn appendCommon(output: *Buffer, test_case: Case) void {
 fn appendTest(output: *Buffer, test_case: Case, config: YamlConfig) void {
     output.raw("{");
     output.key("schema", switch (test_case.kind) {
-        .unit => "pcore.test.unit.v1", .load => "pcore.test.load.v1",
-        .stress => "pcore.test.stress.v1", .chaos => "pcore.test.chaos.v1",
+        .unit => "pcore.test.unit.v1",
+        .load => "pcore.test.load.v1",
+        .stress => "pcore.test.stress.v1",
+        .chaos => "pcore.test.chaos.v1",
         .security => "pcore.test.security.v1",
     });
     output.raw(",");
@@ -251,30 +240,66 @@ fn appendTest(output: *Buffer, test_case: Case, config: YamlConfig) void {
     appendCommon(output, test_case);
     switch (test_case.kind) {
         .unit => {
-            output.raw(","); output.key("oracle", "runtime-owned");
-            output.raw(","); output.jsonString("max_events"); output.raw(":"); output.number(config.unit_max_events);
+            output.raw(",");
+            output.key("oracle", "runtime-owned");
+            output.raw(",");
+            output.jsonString("max_events");
+            output.raw(":");
+            output.number(config.unit_max_events);
         },
         .load => {
-            output.raw(","); output.jsonString("repetitions"); output.raw(":"); output.number(config.load_repetitions);
-            output.raw(","); output.jsonString("max_events"); output.raw(":"); output.number(config.load_max_events);
-            output.raw(","); output.key("settlement", "idempotent-replay");
+            output.raw(",");
+            output.jsonString("repetitions");
+            output.raw(":");
+            output.number(config.load_repetitions);
+            output.raw(",");
+            output.jsonString("max_events");
+            output.raw(":");
+            output.number(config.load_max_events);
+            output.raw(",");
+            output.key("settlement", "idempotent-replay");
         },
         .stress => {
-            output.raw(","); output.jsonString("workers"); output.raw(":"); output.number(config.stress_workers);
-            output.raw(","); output.jsonString("duration_ms"); output.raw(":"); output.number(config.stress_duration_ms);
-            output.raw(","); output.jsonString("max_failures"); output.raw(":"); output.number(config.stress_max_failures);
-            output.raw(","); output.key("scheduling", "bounded-fairness");
+            output.raw(",");
+            output.jsonString("workers");
+            output.raw(":");
+            output.number(config.stress_workers);
+            output.raw(",");
+            output.jsonString("duration_ms");
+            output.raw(":");
+            output.number(config.stress_duration_ms);
+            output.raw(",");
+            output.jsonString("max_failures");
+            output.raw(":");
+            output.number(config.stress_max_failures);
+            output.raw(",");
+            output.key("scheduling", "bounded-fairness");
         },
         .chaos => {
-            output.raw(","); output.jsonString("faults"); output.raw(":"); appendCsvArray(output, config.chaos_faults);
-            output.raw(","); output.key("recovery", config.chaos_recovery);
-            output.raw(","); output.jsonString("replay_required"); output.raw(":"); output.boolean(true);
+            output.raw(",");
+            output.jsonString("faults");
+            output.raw(":");
+            appendCsvArray(output, config.chaos_faults);
+            output.raw(",");
+            output.key("recovery", config.chaos_recovery);
+            output.raw(",");
+            output.jsonString("replay_required");
+            output.raw(":");
+            output.boolean(true);
         },
         .security => {
-            output.raw(","); output.jsonString("capabilities"); output.raw(":"); appendCsvArray(output, config.security_capabilities);
-            output.raw(","); output.jsonString("denials"); output.raw(":"); appendCsvArray(output, config.security_denials);
-            output.raw(","); output.key("secret_handling", "never-export");
-            output.raw(","); output.key("terminal_authority", "runtime-owned");
+            output.raw(",");
+            output.jsonString("capabilities");
+            output.raw(":");
+            appendCsvArray(output, config.security_capabilities);
+            output.raw(",");
+            output.jsonString("denials");
+            output.raw(":");
+            appendCsvArray(output, config.security_denials);
+            output.raw(",");
+            output.key("secret_handling", "never-export");
+            output.raw(",");
+            output.key("terminal_authority", "runtime-owned");
         },
     }
     output.raw("}");

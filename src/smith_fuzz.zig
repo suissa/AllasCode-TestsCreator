@@ -51,7 +51,7 @@ fn generateValue(allocator: std.mem.Allocator, smith: *std.testing.Smith, constr
             const min = c.min_len orelse 0;
             const max = @min(c.max_len orelse 32, max_fuzz_string_bytes);
             if (min > max) return error.ConstraintExceedsFuzzBudget;
-            const mode = smith.valueRangeLessThan(u8, 10);
+            const mode = smith.valueRangeLessThan(u8, 0, 10);
             const len = if (mode < 3) min else if (mode < 6) max else if (mode == 6 and min < max) min + 1 else if (mode == 7 and min < max) max - 1 else min + smith.valueRangeLessThan(usize, 0, max - min + 1);
             const value = try allocator.alloc(u8, len);
             smith.bytes(value);

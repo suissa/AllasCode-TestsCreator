@@ -164,7 +164,7 @@ test "one valid plus isolated boundary and invalid cases" {
         try std.testing.expect(case.invalid_parameter != null);
     };
     try std.testing.expectEqual(@as(usize, 4), invalid);
-    try std.testing.expect(plan.policy.test);
+    try std.testing.expect(plan.policy.enabled);
     try std.testing.expect(plan.policy.ephemeral);
     try std.testing.expect(!plan.policy.persist_payload);
     try std.testing.expect(!plan.policy.persist_events);

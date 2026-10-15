@@ -16,8 +16,9 @@ const fuzz_spec = model.FunctionSpec{
 /// It deliberately does not implement a second mutation/evolution engine.
 pub fn generateArguments(allocator: std.mem.Allocator, smith: *std.testing.Smith, spec: model.FunctionSpec) ![]model.Argument {
     const args = try allocator.alloc(model.Argument, spec.parameters.len);
+    var initialized: usize = 0;
     errdefer {
-        for (args) |arg| switch (arg.value) {
+        for (args[0..initialized]) |arg| switch (arg.value) {
             .string => |value| allocator.free(value),
             else => {},
         };
@@ -25,14 +26,16 @@ pub fn generateArguments(allocator: std.mem.Allocator, smith: *std.testing.Smith
     }
 
     for (spec.parameters, 0..) |param, i| {
-        args[i] = .{ .name = param.name, .value = try generateValue(allocator, smith, param.constraints) };
+        const value = try generateValue(allocator, smith, param.constraints);
+        args[i] = .{ .name = param.name, .value = value };
+        initialized += 1;
     }
     return args;
 }
 
 fn generateValue(allocator: std.mem.Allocator, smith: *std.testing.Smith, constraints: model.Constraints) !model.Value {
     return switch (constraints) {
-        .boolean => .{ .boolean = smith.boolWeighted(&.{ .{ .value = true, .weight = 1 }, .{ .value = false, .weight = 1 } }) },
+        .boolean => .{ .boolean = smith.value(bool) },
         .integer => |c| blk: {
             const min = c.min orelse std.math.minInt(i64);
             const max = c.max orelse std.math.maxInt(i64);
@@ -98,14 +101,3 @@ test "native Smith generates contract-aware inputs and exercises canonical gener
     try std.testing.fuzz({}, fuzzContract, .{});
 }
 
-test "contract-aware generator rejects invalid ranges and bounds string allocation" {
-    const allocator = std.testing.allocator;
-    const invalid = [_]model.ParameterSpec{.{
-        .name = "broken",
-        .constraints = .{ .string = .{ .min_len = 300, .max_len = 400 } },
-    }};
-    var smith = std.testing.Smith.init(.{}); // placeholder replaced if Smith construction is unavailable
-    _ = allocator;
-    _ = invalid;
-    _ = &smith;
-}

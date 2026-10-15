@@ -24,7 +24,12 @@ pub fn build(b: *std.Build) void {
     const trajectory_test_run = b.addRunArtifact(trajectory_tests);
     test_step.dependOn(&trajectory_test_run.step);
 
-    const fuzz_tests = b.addTest(.{ .root_module = b.createModule(.{ .root_source_file = b.path("src/ai_fuzz.zig"), .target = target, .optimize = optimize }) });
-    const fuzz_test_run = b.addRunArtifact(fuzz_tests);
-    test_step.dependOn(&fuzz_test_run.step);
+    const smith_tests = b.addTest(.{ .root_module = b.createModule(.{ .root_source_file = b.path("src/smith_fuzz.zig"), .target = target, .optimize = optimize }) });
+    const smith_test_run = b.addRunArtifact(smith_tests);
+    test_step.dependOn(&smith_test_run.step);
+
+    const native_fuzz_run = b.addRunArtifact(smith_tests);
+    native_fuzz_run.addArgs(&.{"--fuzz=300K"});
+    const native_fuzz_step = b.step("test-fuzz", "Run bounded fuzzing using Zig 0.16 std.testing.Smith");
+    native_fuzz_step.dependOn(&native_fuzz_run.step);
 }

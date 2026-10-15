@@ -37,6 +37,17 @@ The structural path generator is in [src/trajectory.zig](src/trajectory.zig), wi
 
 Given a directed graph with a declared start and explicit terminal states, it enumerates reachable terminal trajectories, bounds traversal, and reports transitions not represented in emitted paths. This is structural model-based path generation; guard satisfiability and runtime execution still require adapters.
 
+## Native Smith semantic fuzzing
+
+The contract-aware adapter in [src/smith_fuzz.zig](src/smith_fuzz.zig) uses Zig 0.16 `std.testing.Smith` rather than a parallel evolutionary engine. It biases typed values toward declared boundaries, bounds string allocation, and fuzzes the canonical case generator.
+
+```sh
+zig build test
+zig build test-fuzz
+```
+
+Specification: [docs/NATIVE-SMITH-SEMANTIC-FUZZING.md](docs/NATIVE-SMITH-SEMANTIC-FUZZING.md). Skill: [skills/native-smith-semantic-fuzzing/SKILL.md](skills/native-smith-semantic-fuzzing/SKILL.md). Runtime Action execution and trajectory/invariant feedback remain future adapter work.
+
 ## Canonical sources and skills
 
 - Semantic declaration: [src/declarations/purecore.pct](src/declarations/purecore.pct)

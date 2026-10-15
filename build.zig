@@ -61,7 +61,7 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&smith_test_run.step);
 
     const native_fuzz_run = b.addRunArtifact(smith_tests);
-    native_fuzz_run.addArgs(&.{ "--fuzz=300K" });
+    native_fuzz_run.addArgs(&.{"--fuzz=300K"});
     const native_fuzz_step = b.step("test-fuzz", "Run bounded fuzzing using Zig 0.16 std.testing.Smith");
     native_fuzz_step.dependOn(&native_fuzz_run.step);
 }

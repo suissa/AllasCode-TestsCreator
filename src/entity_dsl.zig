@@ -4,6 +4,8 @@ pub const ParseError = error{
     EmptySource,
     MissingEntity,
     DuplicateEntity,
+    DuplicateInput,
+    UnknownInputReference,
     MissingInput,
     MissingRun,
     MissingExpectation,
@@ -69,6 +71,10 @@ fn parseValue(allocator: std.mem.Allocator, raw: []const u8) !Value {
     }
     if (std.mem.eql(u8, value, "true")) return .{ .boolean = true };
     if (std.mem.eql(u8, value, "false")) return .{ .boolean = false };
+    // Keep zero-padded identifiers (CPF, postal codes, account numbers) as strings.
+    if (value.len > 1 and value[0] == '0') {
+        return .{ .string = try allocator.dupe(u8, value) };
+    }
     return .{ .integer = std.fmt.parseInt(i64, value, 10) catch
         return .{ .string = try allocator.dupe(u8, value) } };
 }
@@ -154,7 +160,17 @@ pub fn parse(allocator: std.mem.Allocator, source: []const u8) !Scenario {
             entity = trim(line["Entity:".len..]);
             if (entity.len == 0) return ParseError.MissingEntity;
         } else if (std.mem.startsWith(u8, line, "Input ")) {
-            try inputs.append(allocator, try parseInput(allocator, line));
+            const input = try parseInput(allocator, line);
+            for (inputs.items) |existing| {
+                if (std.mem.eql(u8, existing.name, input.name)) {
+                    switch (input.value) {
+                        .string => |value| allocator.free(value),
+                        else => {},
+                    }
+                    return ParseError.DuplicateInput;
+                }
+            }
+            try inputs.append(allocator, input);
         } else if (std.mem.startsWith(u8, line, "Run ")) {
             try runs.append(allocator, try parseRun(allocator, line));
         } else if (std.mem.startsWith(u8, line, "Expect ")) {
@@ -168,6 +184,20 @@ pub fn parse(allocator: std.mem.Allocator, source: []const u8) !Scenario {
     if (inputs.items.len == 0) return ParseError.MissingInput;
     if (runs.items.len == 0) return ParseError.MissingRun;
     if (expectations.items.len == 0) return ParseError.MissingExpectation;
+
+    // Run arguments are symbolic references; reject misspellings before lowering.
+    for (runs.items) |run| {
+        for (run.arguments) |argument| {
+            var found = false;
+            for (inputs.items) |input| {
+                if (std.mem.eql(u8, input.name, argument)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) return ParseError.UnknownInputReference;
+        }
+    }
 
     return .{
         .entity = entity,
@@ -190,7 +220,7 @@ test "parses an entity scenario" {
     try std.testing.expectEqualStrings("Person", scenario.entity);
     try std.testing.expectEqual(@as(usize, 1), scenario.inputs.len);
     try std.testing.expectEqualStrings("cpf", scenario.inputs[0].name);
-    try std.testing.expectEqual(@as(i64, 4_864_713_901), scenario.inputs[0].value.integer);
+    try std.testing.expectEqualStrings("04864713901", scenario.inputs[0].value.string);
     try std.testing.expectEqualStrings("validate", scenario.runs[0].action);
     try std.testing.expectEqual(@as(usize, 1), scenario.runs[0].arguments.len);
     try std.testing.expectEqualStrings("cpf", scenario.runs[0].arguments[0]);
@@ -244,4 +274,39 @@ test "rejects unknown declarations" {
         \Run validate(cpf)
         \Expect isTruth
     ));
+}
+
+
+test "rejects duplicate input names" {
+    const allocator = std.testing.allocator;
+    try std.testing.expectError(ParseError.DuplicateInput, parse(allocator,
+        \\Entity: Person
+        \\Input cpf = 123
+        \\Input cpf = 456
+        \\Run validate(cpf)
+        \\Expect isTruth
+    ));
+}
+
+test "rejects Run arguments that do not reference declared inputs" {
+    const allocator = std.testing.allocator;
+    try std.testing.expectError(ParseError.UnknownInputReference, parse(allocator,
+        \\Entity: Person
+        \\Input cpf = 123
+        \\Run validate(cpf_typo)
+        \\Expect isTruth
+    ));
+}
+
+test "keeps zero-padded numeric identifiers as strings" {
+    const allocator = std.testing.allocator;
+    var scenario = try parse(allocator,
+        \\Entity: Account
+        \\Input account = 000123
+        \\Run validate(account)
+        \\Expect isTruth
+    );
+    defer scenario.deinit(allocator);
+
+    try std.testing.expectEqualStrings("000123", scenario.inputs[0].value.string);
 }

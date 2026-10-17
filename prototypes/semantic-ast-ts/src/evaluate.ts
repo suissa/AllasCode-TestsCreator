@@ -83,16 +83,24 @@ export function evaluateExpression(
           case "gte":
           case "lt":
           case "lte": {
-            if (
-              (typeof left.value !== "number" || typeof right.value !== "number") &&
-              (typeof left.value !== "string" || typeof right.value !== "string")
-            ) {
-              return { ok: false, error: `Comparison '${expression.operator}' requires two numbers or two strings` };
+            const compare = (a: number | string, b: number | string): boolean => {
+              switch (expression.operator) {
+                case "gt": return a > (b as never);
+                case "gte": return a >= (b as never);
+                case "lt": return a < (b as never);
+                case "lte": return a <= (b as never);
+              }
+            };
+            if (typeof left.value === "number" && typeof right.value === "number") {
+              return { ok: true, value: compare(left.value, right.value) };
             }
-            if (expression.operator === "gt") return { ok: true, value: left.value > (right.value as never) };
-            if (expression.operator === "gte") return { ok: true, value: left.value >= (right.value as never) };
-            if (expression.operator === "lt") return { ok: true, value: left.value < (right.value as never) };
-            return { ok: true, value: left.value <= (right.value as never) };
+            if (typeof left.value === "string" && typeof right.value === "string") {
+              return { ok: true, value: compare(left.value, right.value) };
+            }
+            return {
+              ok: false,
+              error: `Comparison '${expression.operator}' requires two numbers or two strings of the same type`,
+            };
           }
         }
       }

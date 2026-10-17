@@ -28,6 +28,10 @@ The structural path generator is in [src/trajectory.zig](src/trajectory.zig), wi
 
 Given a directed graph with a declared start and explicit terminal states, it enumerates reachable terminal trajectories, handles cycles with a bounded policy, and reports uncovered edges. This is structural model-based path generation; guard satisfiability and runtime execution still require adapters.
 
+## Validation-Driven Synthetic Data Generation
+
+The validation feedback layer emits structured diagnostics and applies deterministic, constraint-directed repairs while preserving the original failing case. See [the VDSDG design](docs/VALIDATION-DRIVEN-SYNTHETIC-DATA-GENERATION.md) and [src/validation_feedback.zig](src/validation_feedback.zig). The real validator remains the pass/fail oracle; repair is not proof of validity.
+
 ## Native Smith semantic fuzzing
 
 The contract-aware adapter in [src/smith_fuzz.zig](src/smith_fuzz.zig) uses Zig 0.16 `std.testing.Smith` rather than a parallel evolutionary engine. It biases typed values toward declared boundaries, bounds string allocation, validates generated inputs, and fuzzes the canonical case generator.

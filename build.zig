@@ -54,11 +54,21 @@ pub fn build(b: *std.Build) void {
     });
     const smith_test_run = b.addRunArtifact(smith_tests);
 
-    const test_step = b.step("test", "Run generator, semantic, trajectory and native Smith fuzzing tests");
+    const feedback_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/validation_feedback.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    const feedback_test_run = b.addRunArtifact(feedback_tests);
+
+    const test_step = b.step("test", "Run generator, semantic, trajectory, validation-feedback and native Smith fuzzing tests");
     test_step.dependOn(&test_run.step);
     test_step.dependOn(&semantic_test_run.step);
     test_step.dependOn(&trajectory_test_run.step);
     test_step.dependOn(&smith_test_run.step);
+    test_step.dependOn(&feedback_test_run.step);
 
     const native_fuzz_run = b.addRunArtifact(smith_tests);
     native_fuzz_run.addArgs(&.{"--fuzz=300K"});

@@ -39,3 +39,10 @@ Business stores must never treat synthetic test traffic as durable domain state.
 ## Semantic AtomicBehavior Types
 
 The intended AllasCode integration is for a Semantic AtomicBehavior Type to expose its constraints/invariants once. TestsCreator consumes that same canonical contract, avoiding duplicated validation rules in hand-written tests.
+
+
+## Validation-driven feedback
+
+The validation feedback layer supplements constraint-based case construction with stable violation codes and targeted repair hints. A runner adapter should return structured diagnostics rather than forcing the generator to infer semantics from free-form exception messages. Repairs create new candidates; they never overwrite the original failing example, and every repaired candidate must be revalidated by the authoritative validator.
+
+See [VALIDATION-DRIVEN-SYNTHETIC-DATA-GENERATION.md](VALIDATION-DRIVEN-SYNTHETIC-DATA-GENERATION.md). The current helpers cover numeric bounds and string lengths; arbitrary validator execution, invariant-specific repair, and coverage-guided corpus optimization remain adapter work.

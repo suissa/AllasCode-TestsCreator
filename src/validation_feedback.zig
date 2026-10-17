@@ -31,6 +31,14 @@ pub fn integerViolationCode(value: i64, constraints: model.IntConstraints) ?Viol
     return null;
 }
 
+/// Classify string-length failures independently from repair, so negative examples
+/// retain their original failure code and boundary distance.
+pub fn stringViolationCode(length: usize, constraints: model.StringConstraints) ?ViolationCode {
+    if (constraints.min_len) |min| if (length < min) return .too_short;
+    if (constraints.max_len) |max| if (length > max) return .too_long;
+    return null;
+}
+
 /// Deterministic nearest-bound repair. Boundary and invalid cases must still be
 /// retained separately; a repaired value is a new candidate, not a replacement
 /// for the original failing example.
@@ -91,6 +99,12 @@ test "integer repair clamps only to the violated nearest boundary" {
     try std.testing.expectEqual(@as(i64, 120), high.value);
     const valid = try repairInteger(42, .{ .min = 18, .max = 120 });
     try std.testing.expect(!valid.changed);
+}
+
+test "string validation identifies too-short and too-long inputs" {
+    try std.testing.expectEqual(ViolationCode.too_short, stringViolationCode(1, .{ .min_len = 3, .max_len = 8 }).?);
+    try std.testing.expectEqual(ViolationCode.too_long, stringViolationCode(9, .{ .min_len = 3, .max_len = 8 }).?);
+    try std.testing.expect(stringViolationCode(5, .{ .min_len = 3, .max_len = 8 }) == null);
 }
 
 test "string repair pads or truncates to declared bounds deterministically" {

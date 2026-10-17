@@ -28,7 +28,9 @@ The structural path generator is in [src/trajectory.zig](src/trajectory.zig), wi
 
 Given a directed graph with a declared start and explicit terminal states, it enumerates reachable terminal trajectories, handles cycles with a bounded policy, and reports uncovered edges. This is structural model-based path generation; guard satisfiability and runtime execution still require adapters.
 
-The runtime-neutral feedback adapter in [src/trajectory_executor.zig](src/trajectory_executor.zig) runs generated paths through test-only Action callbacks, records attempted/passed/failed edge coverage, and evaluates terminal invariants after successful paths. See [docs/TRAJECTORY-EXECUTION-ADAPTER.md](docs/TRAJECTORY-EXECUTION-ADAPTER.md). This is an adapter contract, not an OS sandbox; callbacks must use isolated test fixtures and avoid production side effects.
+## Validation-Driven Synthetic Data Generation
+
+The validation feedback layer emits structured diagnostics and applies deterministic, constraint-directed repairs while preserving the original failing case. See [the VDSDG design](docs/VALIDATION-DRIVEN-SYNTHETIC-DATA-GENERATION.md) and [src/validation_feedback.zig](src/validation_feedback.zig). The real validator remains the pass/fail oracle; repair is not proof of validity.
 
 ## Native Smith semantic fuzzing
 

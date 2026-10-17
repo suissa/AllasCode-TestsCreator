@@ -23,6 +23,28 @@ pub const Diagnostic = struct {
 
 pub const RepairReason = enum { unchanged, clamped_to_min, clamped_to_max, padded_to_min, truncated_to_max };
 
+pub const RepairReason = enum { unchanged, clamped_to_min, clamped_to_max, padded_to_min, truncated_to_max };
+
+pub const IntegerRepair = struct {
+    value: i64,
+    changed: bool,
+    reason: RepairReason,
+};
+
+/// Human-readable message with stable machine-readable fields. Avoid raw secrets
+/// in expected/actual; adapters should redact sensitive values before formatting.
+pub fn formatDiagnostic(allocator: std.mem.Allocator, diagnostic: Diagnostic) ![]u8 {
+    const code = @tagName(diagnostic.code);
+    if (diagnostic.invariant) |invariant| {
+        return std.fmt.allocPrint(allocator,
+            "VALIDATION_FEEDBACK code={s} parameter={s} expected={s} actual={s} invariant={s} action=mutate_only_target_and_revalidate",
+            .{ code, diagnostic.parameter, diagnostic.expected, diagnostic.actual, invariant });
+    }
+    return std.fmt.allocPrint(allocator,
+        "VALIDATION_FEEDBACK code={s} parameter={s} expected={s} actual={s} action=apply_targeted_repair_then_revalidate",
+        .{ code, diagnostic.parameter, diagnostic.expected, diagnostic.actual });
+}
+
 /// Return the stable violation code for an integer candidate. The caller supplies
 /// formatted expected/actual values to Diagnostic without leaking allocator ownership.
 pub fn integerViolationCode(value: i64, constraints: model.IntConstraints) ?ViolationCode {

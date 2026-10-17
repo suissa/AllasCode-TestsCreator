@@ -78,12 +78,13 @@ fn freeValue(allocator: std.mem.Allocator, value: model.Value) void {
 
 fn append(allocator: std.mem.Allocator, out: *std.ArrayList(Candidate), name: []const u8, value: model.Value, source: CandidateSource) !void {
     for (out.items) |existing| {
-        if (!std.mem.eql(u8, existing.parameter, name) or existing.value != value) continue;
-        switch (value) {
-            .integer => |v| if (existing.value.integer == v) { freeValue(allocator, value); return; },
-            .boolean => |v| if (existing.value.boolean == v) { freeValue(allocator, value); return; },
-            .string => |v| if (std.mem.eql(u8, existing.value.string, v)) { freeValue(allocator, value); return; },
-        }
+        if (!std.mem.eql(u8, existing.parameter, name)) continue;
+        const duplicate = switch (value) {
+            .integer => |v| existing.value == .integer and existing.value.integer == v,
+            .boolean => |v| existing.value == .boolean and existing.value.boolean == v,
+            .string => |v| existing.value == .string and std.mem.eql(u8, existing.value.string, v),
+        };
+        if (duplicate) { freeValue(allocator, value); return; }
     }
     try out.append(allocator, .{ .parameter = name, .value = value, .source = source });
 }
@@ -130,13 +131,12 @@ fn generateInteger(allocator: std.mem.Allocator, out: *std.ArrayList(Candidate),
     }
     // Seeded candidates are added only after boundaries, strata and semantic operands.
     var state = options.seed ^ 0x9e3779b97f4a7c15;
-    while (withinBudget(out, param.name, budget)) {
+    var attempts: usize = 0;
+    while (withinBudget(out, param.name, budget) and attempts < budget * 4) : (attempts += 1) {
         state = state *% 6364136223846793005 +% 1442695040888963407;
         const span: u128 = @intCast(@as(i128, hi) - @as(i128, lo) + 1);
         const offset = @as(u128, state) % span;
         try addInt(allocator, out, param.name, @intCast(@as(i128, lo) + @as(i128, @intCast(offset))), .stratified, budget);
-        // Avoid an infinite loop when the domain contains fewer distinct values than the budget.
-        if (hi -| lo < 2 and out.items.len > 0) break;
     }
 }
 

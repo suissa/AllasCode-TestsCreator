@@ -36,13 +36,9 @@ pub const IntegerRepair = struct {
 pub fn formatDiagnostic(allocator: std.mem.Allocator, diagnostic: Diagnostic) ![]u8 {
     const code = @tagName(diagnostic.code);
     if (diagnostic.invariant) |invariant| {
-        return std.fmt.allocPrint(allocator,
-            "VALIDATION_FEEDBACK code={s} parameter={s} expected={s} actual={s} invariant={s} action=mutate_only_target_and_revalidate",
-            .{ code, diagnostic.parameter, diagnostic.expected, diagnostic.actual, invariant });
+        return std.fmt.allocPrint(allocator, "VALIDATION_FEEDBACK code={s} parameter={s} expected={s} actual={s} invariant={s} action=mutate_only_target_and_revalidate", .{ code, diagnostic.parameter, diagnostic.expected, diagnostic.actual, invariant });
     }
-    return std.fmt.allocPrint(allocator,
-        "VALIDATION_FEEDBACK code={s} parameter={s} expected={s} actual={s} action=apply_targeted_repair_then_revalidate",
-        .{ code, diagnostic.parameter, diagnostic.expected, diagnostic.actual });
+    return std.fmt.allocPrint(allocator, "VALIDATION_FEEDBACK code={s} parameter={s} expected={s} actual={s} action=apply_targeted_repair_then_revalidate", .{ code, diagnostic.parameter, diagnostic.expected, diagnostic.actual });
 }
 
 /// Return the stable violation code for an integer candidate. The caller supplies

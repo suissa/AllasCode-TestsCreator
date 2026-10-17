@@ -276,7 +276,6 @@ test "rejects unknown declarations" {
     ));
 }
 
-
 test "rejects duplicate input names" {
     const allocator = std.testing.allocator;
     try std.testing.expectError(ParseError.DuplicateInput, parse(allocator,

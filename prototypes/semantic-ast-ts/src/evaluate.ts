@@ -83,23 +83,26 @@ export function evaluateExpression(
           case "gte":
           case "lt":
           case "lte": {
-            const compare = (a: number | string, b: number | string): boolean => {
-              switch (expression.operator) {
-                case "gt": return a > (b as never);
-                case "gte": return a >= (b as never);
-                case "lt": return a < (b as never);
-                case "lte": return a <= (b as never);
-              }
-            };
+            const operator = expression.operator;
             if (typeof left.value === "number" && typeof right.value === "number") {
-              return { ok: true, value: compare(left.value, right.value) };
+              switch (operator) {
+                case "gt": return { ok: true, value: left.value > right.value };
+                case "gte": return { ok: true, value: left.value >= right.value };
+                case "lt": return { ok: true, value: left.value < right.value };
+                case "lte": return { ok: true, value: left.value <= right.value };
+              }
             }
             if (typeof left.value === "string" && typeof right.value === "string") {
-              return { ok: true, value: compare(left.value, right.value) };
+              switch (operator) {
+                case "gt": return { ok: true, value: left.value > right.value };
+                case "gte": return { ok: true, value: left.value >= right.value };
+                case "lt": return { ok: true, value: left.value < right.value };
+                case "lte": return { ok: true, value: left.value <= right.value };
+              }
             }
             return {
               ok: false,
-              error: `Comparison '${expression.operator}' requires two numbers or two strings of the same type`,
+              error: `Comparison '${operator}' requires two numbers or two strings of the same type`,
             };
           }
         }

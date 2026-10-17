@@ -16,6 +16,8 @@ TestsCreator generates:
 
 The semantic compiler validates matching suite/agent/intent identities, required test kinds, recognized configuration keys, and bounded non-zero load/stress settings. DSL/config are data, never executable assertions. The runtime executor remains the authority for observed pass/fail outcomes.
 
+The Entity Driven Testing parser also preserves zero-padded identifiers such as CPF values, rejects duplicate input names, and validates that each `Run` argument refers to a declared `Input` before lowering.
+
 ## Canonical test types
 
 ## Unit/contract tests

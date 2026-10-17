@@ -24,7 +24,7 @@ A parsed scenario contains:
 - one or more Action runs;
 - one or more expectations.
 
-Inputs currently support strings, signed integers, and booleans. Run arguments are symbolic input names, which keeps the scenario independent from the implementation language.
+Inputs currently support strings, signed integers, and booleans. Zero-padded numeric values such as `04864713901` remain strings so identifiers like CPF, postal codes, and account numbers are not corrupted by integer parsing. Run arguments must reference declared input names; duplicate input declarations and unknown references are rejected before lowering.
 
 Expectation expressions remain opaque strings at this layer. This allows the semantic layer to grow without coupling the parser to a fixed assertion vocabulary. Examples include `isTruth`, `isFalse`, `equals(100)`, and future domain-specific predicates.
 
@@ -36,4 +36,4 @@ Entity Driven Testing is the behavioral layer above the existing contract genera
 
 The contract generator remains responsible for valid, boundary, and isolated-invalid data. The trajectory executor remains responsible for executing generated paths and reporting runtime feedback. The Entity DSL provides the declarative behavioral specification that can later compose those capabilities.
 
-The next layer should add semantic lowering for the canonical test types without allowing the DSL itself to become executable code.
+The lowering layer maps the parsed scenario to the five canonical test families: unit, load, stress, chaos, and security. It preserves inputs, Action calls, and expectation expressions without executing them. Next, each family needs its own execution policy and evidence contract, while the runtime remains the authority for pass/fail.

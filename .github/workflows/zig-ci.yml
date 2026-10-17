@@ -7,7 +7,7 @@ on:
     branches: ["main"]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   zig:
@@ -20,6 +20,22 @@ jobs:
         uses: mlugg/setup-zig@v2
         with:
           version: 0.16.0
+
+      - name: Format Zig sources
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" && "${{ github.event.pull_request.head.repo.full_name }}" == "${GITHUB_REPOSITORY}" ]]; then
+            git fetch origin "${GITHUB_HEAD_REF}"
+            git checkout -B "${GITHUB_HEAD_REF}" FETCH_HEAD
+          fi
+          zig fmt build.zig src
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" && "${{ github.event.pull_request.head.repo.full_name }}" == "${GITHUB_REPOSITORY}" ]] && ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add build.zig src
+            git commit -m "style: format Zig sources"
+            git push origin "HEAD:${GITHUB_HEAD_REF}"
+          fi
 
       - name: Verify formatting
         run: zig fmt --check build.zig src

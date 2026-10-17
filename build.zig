@@ -45,6 +45,15 @@ pub fn build(b: *std.Build) void {
     });
     const trajectory_test_run = b.addRunArtifact(trajectory_tests);
 
+    const synthetic_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/synthetic.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    const synthetic_test_run = b.addRunArtifact(synthetic_tests);
+
     const smith_tests = b.addTest(.{
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/smith_fuzz.zig"),
@@ -59,6 +68,7 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&semantic_test_run.step);
     test_step.dependOn(&trajectory_test_run.step);
     test_step.dependOn(&smith_test_run.step);
+    test_step.dependOn(&synthetic_test_run.step);
 
     const native_fuzz_run = b.addRunArtifact(smith_tests);
     native_fuzz_run.addArgs(&.{"--fuzz=300K"});

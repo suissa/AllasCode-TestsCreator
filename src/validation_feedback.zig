@@ -23,46 +23,12 @@ pub const Diagnostic = struct {
 
 pub const RepairReason = enum { unchanged, clamped_to_min, clamped_to_max, padded_to_min, truncated_to_max };
 
-/// Validate primitive constraints and return the first actionable violation.
-/// Callers can pass this diagnostic to the repair loop or formatDiagnostic.
-pub fn inspectInteger(parameter: []const u8, value: i64, constraints: model.IntConstraints) ?Diagnostic {
-    if (constraints.min) |min| {
-        if (value < min) return .{
-            .code = .below_min,
-            .parameter = parameter,
-            .expected = std.fmt.allocPrintSentinel(std.heap.page_allocator, "integer >= {d}", .{min}, 0) catch "declared minimum",
-            .actual = std.fmt.allocPrintSentinel(std.heap.page_allocator, "{d}", .{value}, 0) catch "integer",
-        };
-    }
-    if (constraints.max) |max| {
-        if (value > max) return .{
-            .code = .above_max,
-            .parameter = parameter,
-            .expected = std.fmt.allocPrintSentinel(std.heap.page_allocator, "integer <= {d}", .{max}, 0) catch "declared maximum",
-            .actual = std.fmt.allocPrintSentinel(std.heap.page_allocator, "{d}", .{value}, 0) catch "integer",
-        };
-    }
+/// Return the stable violation code for an integer candidate. The caller supplies
+/// formatted expected/actual values to Diagnostic without leaking allocator ownership.
+pub fn integerViolationCode(value: i64, constraints: model.IntConstraints) ?ViolationCode {
+    if (constraints.min) |min| if (value < min) return .below_min;
+    if (constraints.max) |max| if (value > max) return .above_max;
     return null;
-}
-
-pub const IntegerRepair = struct {
-    value: i64,
-    changed: bool,
-    reason: RepairReason,
-};
-
-/// Emit actionable, structured context so SyntheticDataForger can choose a
-/// targeted mutation without parsing ambiguous exception text.
-pub fn formatDiagnostic(allocator: std.mem.Allocator, diagnostic: Diagnostic) ![]u8 {
-    const code = @tagName(diagnostic.code);
-    if (diagnostic.invariant) |invariant| {
-        return std.fmt.allocPrint(allocator,
-            "VALIDATION_FEEDBACK code={s} parameter={s} expected={s} actual={s} invariant={s} action=mutate_only_target_and_revalidate",
-            .{ code, diagnostic.parameter, diagnostic.expected, diagnostic.actual, invariant });
-    }
-    return std.fmt.allocPrint(allocator,
-        "VALIDATION_FEEDBACK code={s} parameter={s} expected={s} actual={s} action=apply_targeted_repair_then_revalidate",
-        .{ code, diagnostic.parameter, diagnostic.expected, diagnostic.actual });
 }
 
 /// Deterministic nearest-bound repair. Boundary and invalid cases must still be
@@ -109,6 +75,12 @@ test "diagnostics expose stable machine-readable fields and a repair instruction
     try std.testing.expect(std.mem.indexOf(u8, text, "code=below_min") != null);
     try std.testing.expect(std.mem.indexOf(u8, text, "parameter=age") != null);
     try std.testing.expect(std.mem.indexOf(u8, text, "action=apply_targeted_repair_then_revalidate") != null);
+}
+
+test "integer validation identifies the exact violated bound" {
+    try std.testing.expectEqual(ViolationCode.below_min, integerViolationCode(12, .{ .min = 18, .max = 120 }).?);
+    try std.testing.expectEqual(ViolationCode.above_max, integerViolationCode(121, .{ .min = 18, .max = 120 }).?);
+    try std.testing.expect(integerViolationCode(42, .{ .min = 18, .max = 120 }) == null);
 }
 
 test "integer repair clamps only to the violated nearest boundary" {

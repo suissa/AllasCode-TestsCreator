@@ -23,8 +23,6 @@ pub const Diagnostic = struct {
 
 pub const RepairReason = enum { unchanged, clamped_to_min, clamped_to_max, padded_to_min, truncated_to_max };
 
-pub const RepairReason = enum { unchanged, clamped_to_min, clamped_to_max, padded_to_min, truncated_to_max };
-
 pub const IntegerRepair = struct {
     value: i64,
     changed: bool,

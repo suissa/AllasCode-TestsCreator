@@ -23,6 +23,28 @@ pub const Diagnostic = struct {
 
 pub const RepairReason = enum { unchanged, clamped_to_min, clamped_to_max, padded_to_min, truncated_to_max };
 
+/// Validate primitive constraints and return the first actionable violation.
+/// Callers can pass this diagnostic to the repair loop or formatDiagnostic.
+pub fn inspectInteger(parameter: []const u8, value: i64, constraints: model.IntConstraints) ?Diagnostic {
+    if (constraints.min) |min| {
+        if (value < min) return .{
+            .code = .below_min,
+            .parameter = parameter,
+            .expected = std.fmt.allocPrintSentinel(std.heap.page_allocator, "integer >= {d}", .{min}, 0) catch "declared minimum",
+            .actual = std.fmt.allocPrintSentinel(std.heap.page_allocator, "{d}", .{value}, 0) catch "integer",
+        };
+    }
+    if (constraints.max) |max| {
+        if (value > max) return .{
+            .code = .above_max,
+            .parameter = parameter,
+            .expected = std.fmt.allocPrintSentinel(std.heap.page_allocator, "integer <= {d}", .{max}, 0) catch "declared maximum",
+            .actual = std.fmt.allocPrintSentinel(std.heap.page_allocator, "{d}", .{value}, 0) catch "integer",
+        };
+    }
+    return null;
+}
+
 pub const IntegerRepair = struct {
     value: i64,
     changed: bool,

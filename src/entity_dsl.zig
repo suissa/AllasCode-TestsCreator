@@ -210,10 +210,10 @@ pub fn parse(allocator: std.mem.Allocator, source: []const u8) !Scenario {
 test "parses an entity scenario" {
     const allocator = std.testing.allocator;
     var scenario = try parse(allocator,
-        \Entity: Person
-        \Input cpf = 04864713901
-        \Run validate(cpf)
-        \Expect isTruth
+        \\Entity: Person
+        \\Input cpf = 04864713901
+        \\Run validate(cpf)
+        \\Expect isTruth
     );
     defer scenario.deinit(allocator);
 
@@ -230,11 +230,11 @@ test "parses an entity scenario" {
 test "supports string and boolean inputs" {
     const allocator = std.testing.allocator;
     var scenario = try parse(allocator,
-        \Entity: Person
-        \Input name = "Ada"
-        \Input active = true
-        \Run validate(name, active)
-        \Expect isTruth
+        \\Entity: Person
+        \\Input name = "Ada"
+        \\Input active = true
+        \\Run validate(name, active)
+        \\Expect isTruth
     );
     defer scenario.deinit(allocator);
 
@@ -246,10 +246,10 @@ test "supports string and boolean inputs" {
 test "preserves arbitrary expectation expressions for later semantic lowering" {
     const allocator = std.testing.allocator;
     var scenario = try parse(allocator,
-        \Entity: Order
-        \Input total = 100
-        \Run calculate(total)
-        \Expect equals(100)
+        \\Entity: Order
+        \\Input total = 100
+        \\Run calculate(total)
+        \\Expect equals(100)
     );
     defer scenario.deinit(allocator);
 
@@ -259,20 +259,20 @@ test "preserves arbitrary expectation expressions for later semantic lowering" {
 test "rejects incomplete entity scenarios" {
     const allocator = std.testing.allocator;
     try std.testing.expectError(ParseError.MissingRun, parse(allocator,
-        \Entity: Person
-        \Input cpf = 123
-        \Expect isTruth
+        \\Entity: Person
+        \\Input cpf = 123
+        \\Expect isTruth
     ));
 }
 
 test "rejects unknown declarations" {
     const allocator = std.testing.allocator;
     try std.testing.expectError(ParseError.UnexpectedDeclaration, parse(allocator,
-        \Entity: Person
-        \Given something
-        \Input cpf = 123
-        \Run validate(cpf)
-        \Expect isTruth
+        \\Entity: Person
+        \\Given something
+        \\Input cpf = 123
+        \\Run validate(cpf)
+        \\Expect isTruth
     ));
 }
 

@@ -81,7 +81,16 @@ pub fn build(b: *std.Build) void {
     });
     const entity_test_run = b.addRunArtifact(entity_tests);
 
-    const test_step = b.step("test", "Run generator, semantic, trajectory, execution, entity DSL, validation-feedback and native Smith fuzzing tests");
+    const entity_lowering_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/entity_lowering.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    const entity_lowering_test_run = b.addRunArtifact(entity_lowering_tests);
+
+    const test_step = b.step("test", "Run generator, semantic, trajectory, execution, entity DSL lowering, validation-feedback and native Smith fuzzing tests");
     test_step.dependOn(&test_run.step);
     test_step.dependOn(&semantic_test_run.step);
     test_step.dependOn(&trajectory_test_run.step);
@@ -89,6 +98,7 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&smith_test_run.step);
     test_step.dependOn(&feedback_test_run.step);
     test_step.dependOn(&entity_test_run.step);
+    test_step.dependOn(&entity_lowering_test_run.step);
 
     const native_fuzz_run = b.addRunArtifact(smith_tests);
     native_fuzz_run.addArgs(&.{"--fuzz=300K"});
